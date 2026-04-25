@@ -1,5 +1,6 @@
 from flask import Flask, request, jsonify, send_file
 import uuid, json
+import os
 
 app = Flask(__name__)
 
@@ -7,10 +8,11 @@ app = Flask(__name__)
 def home():
     return '''
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Minecraft Manifest Generator Pro</title>
+    <title>MC Manifest Generator Pro</title>
     <style>
         :root { --p-color: #7c3aed; --s-color: #22d3ee; --bg-dark: #020617; }
         
@@ -22,92 +24,104 @@ def home():
 
         .app { width: 100%; max-width: 500px; padding: 15px; box-sizing: border-box; }
 
-        /* Sửa lỗi Title chạm viền và tách hàng */
-        .header { text-align: center; margin-bottom: 20px; }
+        /* Tiêu đề & Biểu tượng */
+        .header { text-align: center; margin-bottom: 25px; }
         .header h2 { 
-            margin: 0; font-size: clamp(18px, 5vw, 22px); 
+            margin: 0; font-size: clamp(20px, 6vw, 26px); 
             background: linear-gradient(90deg, #c084fc, var(--s-color)); 
             -webkit-background-clip: text; color: transparent;
-            display: flex; align-items: center; justify-content: center; gap: 10px;
-            white-space: nowrap; /* Giữ tiêu đề trên 1 dòng */
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+            white-space: nowrap; 
+        }
+        .code-icon {
+            font-size: 16px; color: var(--s-color); font-weight: bold; margin-top: 5px;
+            letter-spacing: 2px; font-family: monospace;
         }
         
         .card { 
             background: rgba(30, 41, 59, 0.8); backdrop-filter: blur(15px); 
-            padding: 20px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.1); 
+            padding: 22px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.1); 
             box-shadow: 0 10px 30px rgba(0,0,0,0.5);
         }
 
-        .input-group { margin-bottom: 12px; }
-        label { display: block; font-size: 11px; color: #a5b4fc; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .input-group { margin-bottom: 14px; }
+        label { display: block; font-size: 11px; color: #a5b4fc; margin-bottom: 5px; text-transform: uppercase; letter-spacing: 0.5px; font-weight: bold; }
         
         input, select { 
-            width: 100%; padding: 10px; border-radius: 10px; 
+            width: 100%; padding: 12px; border-radius: 10px; 
             border: 1px solid #334155; background: #020617; 
-            color: white; font-size: 14px; box-sizing: border-box;
+            color: white; font-size: 14px; box-sizing: border-box; transition: 0.3s;
         }
+        input:focus, select:focus { outline: none; border-color: var(--s-color); box-shadow: 0 0 8px rgba(34, 211, 238, 0.2); }
 
-        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 
-        /* Nhóm nút bấm */
-        .btn-group { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; }
+        /* Đồng bộ hai nút bấm chính */
+        .btn-group { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 15px; }
         button { 
-            padding: 12px; border: none; border-radius: 12px; 
+            padding: 14px; border: none; border-radius: 12px; 
             background: linear-gradient(135deg, var(--p-color), var(--s-color)); 
-            font-weight: bold; color: white; cursor: pointer; transition: 0.2s; font-size: 13px;
+            font-weight: bold; color: white; cursor: pointer; transition: 0.2s; font-size: 14px;
         }
-        button.secondary { background: #1e293b; color: #94a3b8; border: 1px solid #334155; }
+        button.full-width { grid-column: span 2; background: #1e293b; color: #cbd5e1; border: 1px solid #334155; }
+        button:hover { filter: brightness(1.1); }
         button:active { transform: scale(0.96); }
 
-        /* Sửa lỗi Preview chuyên nghiệp */
-        .preview-box { margin-top: 15px; }
-        .preview-label { font-size: 11px; color: #64748b; margin-bottom: 5px; display: flex; justify-content: space-between; }
+        /* Khung Preview (Đã sửa lỗi text rớt dòng) */
+        .preview-box { margin-top: 18px; }
+        .preview-label { font-size: 11px; color: #94a3b8; margin-bottom: 6px; display: flex; justify-content: space-between; font-weight: bold;}
         pre { 
             background: #000; padding: 15px; border-radius: 10px; 
-            font-size: 12px; color: #38bdf8; overflow: auto; 
-            max-height: 200px; border: 1px solid #1e293b;
-            margin: 0; line-height: 1.5; tab-size: 4;
+            font-size: 12px; color: #38bdf8; overflow-x: auto; overflow-y: auto;
+            max-height: 250px; border: 1px solid #1e293b;
+            margin: 0; line-height: 1.5; tab-size: 4; white-space: pre; 
         }
+        /* Scrollbar cho đẹp */
+        pre::-webkit-scrollbar { height: 6px; width: 6px; }
+        pre::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
         
-        .footer { text-align: center; margin-top: 15px; font-size: 11px; color: #475569; }
+        .footer { text-align: center; margin-top: 20px; font-size: 11px; color: #475569; }
+        .footer b { color: var(--s-color); }
     </style>
 </head>
 <body>
 
 <div class="app">
     <div class="header">
-        <h2>Minecraft Manifest Generator ⚙️</h2>
+        <h2>MC Manifest Generator ⚙️</h2>
+        <div class="code-icon">&lt; / &gt;</div>
     </div>
 
     <div class="card">
         <div class="input-group">
-            <label>Loại Pack (Pack Type)</label>
+            <label>Pack Type</label>
             <select id="type" onchange="liveUpdate()">
-                <option value="resources">Resource Pack (Textures/UI)</option>
-                <option value="data">Behavior Pack (Add-ons)</option>
+                <option value="resources">Resources</option>
+                <option value="data">Behavior</option>
                 <option value="skin_pack">Skin Pack</option>
-                <option value="script">Script Pack (API/Gametest)</option>
+                <option value="script">Script</option>
             </select>
         </div>
 
         <div class="input-group">
-            <label>Tên Pack</label>
-            <input id="name" placeholder="Ví dụ: My Mod" oninput="liveUpdate()">
+            <label>Pack Name</label>
+            <input id="name" placeholder="Example: Ultra Pack" oninput="liveUpdate()">
         </div>
 
         <div class="input-group">
-            <label>Mô tả</label>
-            <input id="desc" placeholder="Nhập mô tả..." oninput="liveUpdate()">
+            <label>Description</label>
+            <input id="desc" placeholder="Enter description..." oninput="liveUpdate()">
         </div>
 
         <div class="grid">
             <div class="input-group">
-                <label>Phiên bản</label>
+                <label>Version</label>
                 <input id="ver" value="1,0,0" oninput="liveUpdate()">
             </div>
             <div class="input-group">
-                <label>Engine</label>
+                <label>Engine Version</label>
                 <select id="engine" onchange="liveUpdate()">
+                    <option value="1,17,0">1.17.0</option>
                     <option value="1,20,0">1.20.0</option>
                     <option value="1,21,0" selected>1.21.0</option>
                 </select>
@@ -116,21 +130,22 @@ def home():
 
         <div class="preview-box">
             <div class="preview-label">
-                <span>Dòng mã Manifest.json:</span>
+                <span>JSON PREVIEW:</span>
                 <span id="copy-text" style="color:var(--s-color)"></span>
             </div>
             <pre id="preview"></pre>
         </div>
 
         <div class="btn-group">
-            <button onclick="download()">Tải (.json)</button>
-            <button class="secondary" onclick="copyJSON()">Sao chép mã</button>
-            <button class="secondary" style="grid-column: span 2;" onclick="refreshUUID()">Tạo mới bộ UUID</button>
+            <button onclick="download()">Download (.json)</button>
+            <button onclick="copyJSON()">Copy Code</button>
+            <button class="full-width" onclick="refreshUUID()">Refresh UUIDs</button>
         </div>
     </div>
 
     <div class="footer">
-        Vá lỗi khẩn cấp bởi <b>Probfix</b> & <b>Partner</b> ⚡
+        Made by <b>Probfix</b> & <b>AI Partner</b> ⚡<br>
+        For Minecraft Bedrock Edition
     </div>
 </div>
 
@@ -152,7 +167,7 @@ function refreshUUID() {
 function liveUpdate() {
     const type = document.getElementById("type").value;
     const name = document.getElementById("name").value || "Unnamed Pack";
-    const desc = document.getElementById("desc").value || "No description";
+    const desc = document.getElementById("desc").value || "No description provided.";
     const ver = document.getElementById("ver").value.split(",").map(n => parseInt(n.trim()) || 0);
     const engine = document.getElementById("engine").value.split(",").map(Number);
 
@@ -178,7 +193,6 @@ function liveUpdate() {
         currentJSON.dependencies = [{ "module_name": "@minecraft/server", "version": "1.1.0" }];
     }
 
-    // Hiển thị JSON thụt lề chuẩn 4 dấu cách
     document.getElementById("preview").innerText = JSON.stringify(currentJSON, null, 4);
 }
 
@@ -199,11 +213,11 @@ async function download() {
 
 function copyJSON() {
     navigator.clipboard.writeText(JSON.stringify(currentJSON, null, 4));
-    document.getElementById("copy-text").innerText = "Đã chép!";
+    document.getElementById("copy-text").innerText = "Copied! ✓";
     setTimeout(() => document.getElementById("copy-text").innerText = "", 2000);
 }
 
-// Khởi chạy ngay khi load
+// Chạy lần đầu khi trang load
 liveUpdate();
 </script>
 </body>
