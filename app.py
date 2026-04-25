@@ -3,7 +3,6 @@ import uuid, json
 
 app = Flask(__name__)
 
-# ===== UI =====
 @app.route("/")
 def home():
     return '''
@@ -13,30 +12,120 @@ def home():
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Manifest Generator</title>
 
+<link rel="icon" href="https://www.minecraft.net/etc.clientlibs/minecraft/clientlibs/main/resources/favicon.ico">
+
 <style>
-body { background:#0f172a; color:white; font-family:sans-serif; margin:0; }
-.app { max-width:420px; margin:auto; padding:20px; }
-.card { background:#1e293b; padding:20px; border-radius:20px; }
-input { width:100%; padding:12px; margin:8px 0; border-radius:10px; border:none; }
-button { width:100%; padding:14px; border:none; border-radius:12px; background:#facc15; margin-top:10px; }
-.preview { margin-top:15px; background:#020617; padding:10px; border-radius:10px; font-size:12px; max-height:200px; overflow:auto; }
+body {
+    margin:0;
+    font-family:sans-serif;
+    background: linear-gradient(135deg, #0f172a, #020617);
+    color:white;
+}
+
+.app {
+    max-width:420px;
+    margin:auto;
+    padding:20px;
+}
+
+.header {
+    text-align:center;
+    margin-bottom:20px;
+}
+
+.header h2 {
+    margin:0;
+}
+
+.header p {
+    color:#94a3b8;
+    font-size:13px;
+}
+
+.card {
+    background: rgba(30,41,59,0.8);
+    backdrop-filter: blur(10px);
+    padding:20px;
+    border-radius:20px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.4);
+}
+
+input, select {
+    width:100%;
+    padding:12px;
+    margin:8px 0;
+    border-radius:10px;
+    border:none;
+    font-size:16px;
+}
+
+button {
+    width:100%;
+    padding:14px;
+    border:none;
+    border-radius:14px;
+    background: linear-gradient(135deg, #facc15, #f59e0b);
+    font-weight:bold;
+    margin-top:10px;
+    transition:0.2s;
+}
+
+button:active {
+    transform: scale(0.96);
+}
+
+.preview {
+    margin-top:15px;
+    background:#020617;
+    padding:10px;
+    border-radius:10px;
+    font-size:12px;
+    max-height:200px;
+    overflow:auto;
+}
+
+.loading {
+    text-align:center;
+    margin-top:10px;
+    display:none;
+}
+
+.small-btn {
+    background:#38bdf8;
+}
 </style>
 </head>
 
 <body>
+
 <div class="app">
-<h2>🔥 Manifest Generator</h2>
+
+<div class="header">
+  <h2>🧱 Manifest Generator</h2>
+  <p>Minecraft Bedrock Tool</p>
+</div>
 
 <div class="card">
+
 <input id="name" placeholder="Pack Name">
 <input id="desc" placeholder="Description">
+
 <input id="ver" placeholder="Version (1,0,0)">
-<input id="engine" placeholder="Min Engine (1,20,0)">
+
+<select id="engine">
+  <option value="1,20,0">Engine 1.20.0</option>
+  <option value="1,21,0">Engine 1.21.0</option>
+  <option value="1,21,50">Engine 1.21.50</option>
+</select>
 
 <button onclick="generate()">Generate</button>
-<button onclick="download()">Download</button>
+<button class="small-btn" onclick="download()">Download</button>
+<button class="small-btn" onclick="copyJSON()">Copy JSON</button>
+
+<div id="loading" class="loading">⏳ Generating...</div>
 
 <div class="preview" id="preview">JSON preview...</div>
+
 </div>
 </div>
 
@@ -44,15 +133,27 @@ button { width:100%; padding:14px; border:none; border-radius:12px; background:#
 let currentJSON = null;
 
 async function generate(){
+    let name = document.getElementById("name").value;
+    let desc = document.getElementById("desc").value;
+    let ver = document.getElementById("ver").value;
+    let engine = document.getElementById("engine").value;
+
+    if(!name || !desc || !ver){
+        alert("Nhập đủ thông tin 😑");
+        return;
+    }
+
+    document.getElementById("loading").style.display = "block";
+
     try{
         let res = await fetch("/generate", {
             method:"POST",
             headers:{"Content-Type":"application/json"},
             body:JSON.stringify({
-                name: document.getElementById("name").value,
-                desc: document.getElementById("desc").value,
-                ver: document.getElementById("ver").value,
-                engine: document.getElementById("engine").value
+                name: name,
+                desc: desc,
+                ver: ver,
+                engine: engine
             })
         });
 
@@ -70,6 +171,8 @@ async function generate(){
     }catch(e){
         alert("Fetch lỗi: " + e);
     }
+
+    document.getElementById("loading").style.display = "none";
 }
 
 async function download(){
@@ -91,6 +194,19 @@ async function download(){
     a.href = url;
     a.download = "manifest.json";
     a.click();
+}
+
+function copyJSON(){
+    if(!currentJSON){
+        alert("Generate trước!");
+        return;
+    }
+
+    navigator.clipboard.writeText(
+        JSON.stringify(currentJSON, null, 4)
+    );
+
+    alert("Copied JSON!");
 }
 </script>
 
@@ -138,7 +254,6 @@ def generate():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-
 # ===== DOWNLOAD =====
 @app.route("/download", methods=["POST"])
 def download():
@@ -150,6 +265,5 @@ def download():
     return send_file("manifest.json", as_attachment=True)
 
 
-# ===== RUN LOCAL =====
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000)
