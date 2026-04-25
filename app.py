@@ -12,15 +12,12 @@ def home():
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Manifest Generator</title>
 
-<link rel="icon" href="https://www.minecraft.net/etc.clientlibs/minecraft/clientlibs/main/resources/favicon.ico">
-
 <style>
 body {
     margin:0;
     font-family:sans-serif;
     background: radial-gradient(circle at top, #1e1b4b, #020617);
     color:white;
-    overflow-x:hidden;
 }
 
 /* Glow nền */
@@ -52,7 +49,6 @@ body::after {
     max-width:420px;
     margin:auto;
     padding:20px;
-    position:relative;
 }
 
 /* Header */
@@ -63,6 +59,7 @@ body::after {
 
 .header h2 {
     margin:0;
+    font-size:22px;
     background: linear-gradient(90deg,#c084fc,#22d3ee);
     -webkit-background-clip:text;
     color:transparent;
@@ -92,10 +89,9 @@ input, select {
     border:none;
     background:#020617;
     color:white;
-    outline:none;
 }
 
-/* Button neon */
+/* Button */
 button {
     width:100%;
     padding:14px;
@@ -107,10 +103,6 @@ button {
     color:white;
     box-shadow: 0 0 15px rgba(124,58,237,0.6);
     transition:0.2s;
-}
-
-button:hover {
-    box-shadow: 0 0 25px rgba(34,211,238,0.8);
 }
 
 button:active {
@@ -126,7 +118,6 @@ button:active {
     font-size:12px;
     max-height:200px;
     overflow:auto;
-    border:1px solid rgba(255,255,255,0.05);
 }
 
 /* Loading */
@@ -143,6 +134,7 @@ button:active {
     margin-top:20px;
     font-size:12px;
     color:#64748b;
+    line-height:1.5;
 }
 </style>
 </head>
@@ -152,7 +144,7 @@ button:active {
 <div class="app">
 
 <div class="header">
-  <h2>🧱 Manifest Generator</h2>
+  <h2>( / ) Manifest Generator</h2>
   <p>Minecraft Bedrock Tool • Neon Edition</p>
 </div>
 
@@ -180,7 +172,8 @@ button:active {
 </div>
 
 <div class="footer">
-Made with ⚡ by you
+Make by Probfix ⚡<br>
+Supported by ChatGPT ⚡
 </div>
 
 </div>
