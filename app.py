@@ -18,16 +18,44 @@ def home():
 body {
     margin:0;
     font-family:sans-serif;
-    background: linear-gradient(135deg, #0f172a, #020617);
+    background: radial-gradient(circle at top, #1e1b4b, #020617);
     color:white;
+    overflow-x:hidden;
+}
+
+/* Glow nền */
+body::before {
+    content:"";
+    position:fixed;
+    width:300px;
+    height:300px;
+    background:#7c3aed;
+    filter:blur(120px);
+    top:-100px;
+    left:-100px;
+    opacity:0.5;
+}
+
+body::after {
+    content:"";
+    position:fixed;
+    width:300px;
+    height:300px;
+    background:#22d3ee;
+    filter:blur(120px);
+    bottom:-100px;
+    right:-100px;
+    opacity:0.5;
 }
 
 .app {
     max-width:420px;
     margin:auto;
     padding:20px;
+    position:relative;
 }
 
+/* Header */
 .header {
     text-align:center;
     margin-bottom:20px;
@@ -35,45 +63,61 @@ body {
 
 .header h2 {
     margin:0;
+    background: linear-gradient(90deg,#c084fc,#22d3ee);
+    -webkit-background-clip:text;
+    color:transparent;
 }
 
 .header p {
-    color:#94a3b8;
+    color:#a5b4fc;
     font-size:13px;
 }
 
+/* Card */
 .card {
-    background: rgba(30,41,59,0.8);
-    backdrop-filter: blur(10px);
+    background: rgba(30,41,59,0.6);
+    backdrop-filter: blur(15px);
     padding:20px;
     border-radius:20px;
-    box-shadow: 0 10px 25px rgba(0,0,0,0.4);
+    border:1px solid rgba(255,255,255,0.05);
+    box-shadow: 0 0 30px rgba(124,58,237,0.3);
 }
 
+/* Input */
 input, select {
     width:100%;
     padding:12px;
     margin:8px 0;
     border-radius:10px;
     border:none;
-    font-size:16px;
+    background:#020617;
+    color:white;
+    outline:none;
 }
 
+/* Button neon */
 button {
     width:100%;
     padding:14px;
     border:none;
     border-radius:14px;
-    background: linear-gradient(135deg, #facc15, #f59e0b);
+    background: linear-gradient(135deg,#7c3aed,#22d3ee);
     font-weight:bold;
     margin-top:10px;
+    color:white;
+    box-shadow: 0 0 15px rgba(124,58,237,0.6);
     transition:0.2s;
+}
+
+button:hover {
+    box-shadow: 0 0 25px rgba(34,211,238,0.8);
 }
 
 button:active {
     transform: scale(0.96);
 }
 
+/* Preview */
 .preview {
     margin-top:15px;
     background:#020617;
@@ -82,16 +126,23 @@ button:active {
     font-size:12px;
     max-height:200px;
     overflow:auto;
+    border:1px solid rgba(255,255,255,0.05);
 }
 
+/* Loading */
 .loading {
     text-align:center;
     margin-top:10px;
     display:none;
+    color:#22d3ee;
 }
 
-.small-btn {
-    background:#38bdf8;
+/* Footer */
+.footer {
+    text-align:center;
+    margin-top:20px;
+    font-size:12px;
+    color:#64748b;
 }
 </style>
 </head>
@@ -102,7 +153,7 @@ button:active {
 
 <div class="header">
   <h2>🧱 Manifest Generator</h2>
-  <p>Minecraft Bedrock Tool</p>
+  <p>Minecraft Bedrock Tool • Neon Edition</p>
 </div>
 
 <div class="card">
@@ -119,14 +170,19 @@ button:active {
 </select>
 
 <button onclick="generate()">Generate</button>
-<button class="small-btn" onclick="download()">Download</button>
-<button class="small-btn" onclick="copyJSON()">Copy JSON</button>
+<button onclick="download()">Download</button>
+<button onclick="copyJSON()">Copy JSON</button>
 
 <div id="loading" class="loading">⏳ Generating...</div>
 
 <div class="preview" id="preview">JSON preview...</div>
 
 </div>
+
+<div class="footer">
+Made with ⚡ by you
+</div>
+
 </div>
 
 <script>
@@ -150,10 +206,10 @@ async function generate(){
             method:"POST",
             headers:{"Content-Type":"application/json"},
             body:JSON.stringify({
-                name: name,
-                desc: desc,
-                ver: ver,
-                engine: engine
+                name:name,
+                desc:desc,
+                ver:ver,
+                engine:engine
             })
         });
 
@@ -206,7 +262,7 @@ function copyJSON(){
         JSON.stringify(currentJSON, null, 4)
     );
 
-    alert("Copied JSON!");
+    alert("Copied!");
 }
 </script>
 
@@ -263,7 +319,3 @@ def download():
         json.dump(data, f, indent=4)
 
     return send_file("manifest.json", as_attachment=True)
-
-
-if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000)
