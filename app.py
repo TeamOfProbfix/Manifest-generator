@@ -1,8 +1,9 @@
-from flask import Flask, request, send_file, jsonify
-import json, uuid
+from flask import Flask, request, jsonify, send_file
+import uuid, json, os
 
 app = Flask(__name__)
 
+# ===== UI (GIAO DIỆN MOBILE) =====
 @app.route("/")
 def home():
     return '''
@@ -41,30 +42,30 @@ button { width:100%; padding:14px; border:none; border-radius:12px; background:#
 
 <script>
 let currentJSON = null;
-const BASE = window.location.origin; // FIX quan trọng
 
 async function generate(){
     try{
-        let res = await fetch(BASE + "/generate", {
+        let res = await fetch("/generate", {
             method:"POST",
             headers:{"Content-Type":"application/json"},
             body:JSON.stringify({
-                name: name.value,
-                desc: desc.value,
-                ver: ver.value,
-                engine: engine.value
+                name: document.getElementById("name").value,
+                desc: document.getElementById("desc").value,
+                ver: document.getElementById("ver").value,
+                engine: document.getElementById("engine").value
             })
         });
 
         let data = await res.json();
 
         if(!res.ok){
-            alert("Server lỗi: " + JSON.stringify(data));
+            alert("Lỗi: " + JSON.stringify(data));
             return;
         }
 
         currentJSON = data;
-        preview.innerText = JSON.stringify(data, null, 4);
+        document.getElementById("preview").innerText =
+            JSON.stringify(data, null, 4);
 
     }catch(e){
         alert("Fetch lỗi: " + e);
@@ -77,24 +78,19 @@ async function download(){
         return;
     }
 
-    try{
-        let res = await fetch(BASE + "/download", {
-            method:"POST",
-            headers:{"Content-Type":"application/json"},
-            body:JSON.stringify(currentJSON)
-        });
+    let res = await fetch("/download", {
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body:JSON.stringify(currentJSON)
+    });
 
-        let blob = await res.blob();
-        let url = URL.createObjectURL(blob);
+    let blob = await res.blob();
+    let url = URL.createObjectURL(blob);
 
-        let a = document.createElement("a");
-        a.href = url;
-        a.download = "manifest.json";
-        a.click();
-
-    }catch(e){
-        alert("Download lỗi: " + e);
-    }
+    let a = document.createElement("a");
+    a.href = url;
+    a.download = "manifest.json";
+    a.click();
 }
 </script>
 
@@ -102,43 +98,59 @@ async function download(){
 </html>
 '''
 
+# ===== API GENERATE =====
 @app.route("/generate", methods=["POST"])
 def generate():
+    data = request.get_json(silent=True)
+
+    if not data:
+        return jsonify({"error": "No data received"}), 400
+
+    name = data.get("name")
+    desc = data.get("desc")
+    ver = data.get("ver")
+    engine = data.get("engine")
+
+    if not all([name, desc, ver, engine]):
+        return jsonify({"error": "Missing fields"}), 400
+
     try:
-        data = request.json
-        version = [int(x) for x in data["ver"].split(",")]
-        engine = [int(x) for x in data["engine"].split(",")]
+        version = [int(x) for x in ver.split(",")]
+        engine_v = [int(x) for x in engine.split(",")]
+    except:
+        return jsonify({"error": "Sai format version (vd: 1,0,0)"}), 400
 
-        manifest = {
-            "format_version": 2,
-            "header": {
-                "name": data["name"],
-                "description": data["desc"],
+    manifest = {
+        "format_version": 2,
+        "header": {
+            "name": name,
+            "description": desc,
+            "uuid": str(uuid.uuid4()),
+            "version": version,
+            "min_engine_version": engine_v
+        },
+        "modules": [
+            {
+                "type": "resources",
                 "uuid": str(uuid.uuid4()),
-                "version": version,
-                "min_engine_version": engine
-            },
-            "modules": [
-                {
-                    "type": "resources",
-                    "uuid": str(uuid.uuid4()),
-                    "version": version
-                }
-            ]
-        }
+                "version": version
+            }
+        ]
+    }
 
-        return jsonify(manifest)
+    return jsonify(manifest)
 
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
-
+# ===== API DOWNLOAD =====
 @app.route("/download", methods=["POST"])
 def download():
-    data = request.json
+    data = request.get_json()
 
-    with open("manifest.json", "w") as f:
+    file_path = "manifest.json"
+    with open(file_path, "w") as f:
         json.dump(data, f, indent=4)
 
-    return send_file("manifest.json", as_attachment=True)
+    return send_file(file_path, as_attachment=True)
 
-app.run(host="0.0.0.0", port=5000, debug=True)
+# ===== RUN LOCAL =====
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=5000)
