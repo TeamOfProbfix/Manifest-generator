@@ -10,7 +10,9 @@ def home():
 <html>
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Manifest Generator</title>
+<title>Minecraft Manifest Generator</title>
+
+<link rel="icon" type="image/png" href="/static/favicon.png">
 
 <style>
 body {
@@ -59,7 +61,7 @@ body::after {
 
 .header h2 {
     margin:0;
-    font-size:22px;
+    font-size:20px;
     background: linear-gradient(90deg,#c084fc,#22d3ee);
     -webkit-background-clip:text;
     color:transparent;
@@ -76,37 +78,44 @@ body::after {
     backdrop-filter: blur(15px);
     padding:20px;
     border-radius:20px;
-    border:1px solid rgba(255,255,255,0.05);
-    box-shadow: 0 0 30px rgba(124,58,237,0.3);
 }
 
-/* Input */
+/* Input fix gọn lại */
+.input-group {
+    margin-bottom:12px;
+}
+
 input, select {
     width:100%;
-    padding:12px;
-    margin:8px 0;
+    padding:10px;
     border-radius:10px;
     border:none;
     background:#020617;
     color:white;
+    font-size:14px;
+}
+
+/* note nhỏ */
+.note {
+    font-size:11px;
+    color:#64748b;
+    margin-top:3px;
 }
 
 /* Button */
 button {
     width:100%;
-    padding:14px;
+    padding:13px;
     border:none;
     border-radius:14px;
     background: linear-gradient(135deg,#7c3aed,#22d3ee);
     font-weight:bold;
     margin-top:10px;
     color:white;
-    box-shadow: 0 0 15px rgba(124,58,237,0.6);
-    transition:0.2s;
 }
 
 button:active {
-    transform: scale(0.96);
+    transform: scale(0.97);
 }
 
 /* Preview */
@@ -120,21 +129,12 @@ button:active {
     overflow:auto;
 }
 
-/* Loading */
-.loading {
-    text-align:center;
-    margin-top:10px;
-    display:none;
-    color:#22d3ee;
-}
-
 /* Footer */
 .footer {
     text-align:center;
     margin-top:20px;
     font-size:12px;
     color:#64748b;
-    line-height:1.5;
 }
 </style>
 </head>
@@ -144,28 +144,40 @@ button:active {
 <div class="app">
 
 <div class="header">
-  <h2>( / ) Manifest Generator</h2>
+  <h2></> Minecraft Manifest Generator ⚙️</h2>
   <p>Minecraft Bedrock Tool • Neon Edition</p>
 </div>
 
 <div class="card">
 
+<div class="input-group">
 <input id="name" placeholder="Pack Name">
+</div>
+
+<div class="input-group">
 <input id="desc" placeholder="Description">
+</div>
 
-<input id="ver" placeholder="Version (1,0,0)">
+<div class="input-group">
+<input id="ver" value="1,0,0">
+<div class="note">Change version to avoid errors</div>
+</div>
 
+<div class="input-group">
 <select id="engine">
-  <option value="1,20,0">Engine 1.20.0</option>
-  <option value="1,21,0">Engine 1.21.0</option>
-  <option value="1,21,50">Engine 1.21.50</option>
+  <option value="1,17,0">1.17.0</option>
+  <option value="1,18,0">1.18.0</option>
+  <option value="1,19,0">1.19.0</option>
+  <option value="1,20,0" selected>1.20.0</option>
+  <option value="1,21,0">1.21.0</option>
+  <option value="1,26,0">1.26.0</option>
 </select>
+<div class="note">you can change to 1.21.130,...</div>
+</div>
 
 <button onclick="generate()">Generate</button>
 <button onclick="download()">Download</button>
 <button onclick="copyJSON()">Copy JSON</button>
-
-<div id="loading" class="loading">⏳ Generating...</div>
 
 <div class="preview" id="preview">JSON preview...</div>
 
@@ -187,41 +199,27 @@ async function generate(){
     let ver = document.getElementById("ver").value;
     let engine = document.getElementById("engine").value;
 
-    if(!name || !desc || !ver){
+    if(!name || !desc){
         alert("Nhập đủ thông tin 😑");
         return;
     }
 
-    document.getElementById("loading").style.display = "block";
+    let res = await fetch("/generate", {
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({name, desc, ver, engine})
+    });
 
-    try{
-        let res = await fetch("/generate", {
-            method:"POST",
-            headers:{"Content-Type":"application/json"},
-            body:JSON.stringify({
-                name:name,
-                desc:desc,
-                ver:ver,
-                engine:engine
-            })
-        });
+    let data = await res.json();
 
-        let data = await res.json();
-
-        if(!res.ok){
-            alert("Lỗi: " + JSON.stringify(data));
-            return;
-        }
-
-        currentJSON = data;
-        document.getElementById("preview").innerText =
-            JSON.stringify(data, null, 4);
-
-    }catch(e){
-        alert("Fetch lỗi: " + e);
+    if(!res.ok){
+        alert(JSON.stringify(data));
+        return;
     }
 
-    document.getElementById("loading").style.display = "none";
+    currentJSON = data;
+    document.getElementById("preview").innerText =
+        JSON.stringify(data, null, 4);
 }
 
 async function download(){
@@ -263,7 +261,6 @@ function copyJSON(){
 </html>
 '''
 
-# ===== GENERATE =====
 @app.route("/generate", methods=["POST"])
 def generate():
     try:
@@ -303,7 +300,6 @@ def generate():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-# ===== DOWNLOAD =====
 @app.route("/download", methods=["POST"])
 def download():
     data = request.get_json(force=True)
