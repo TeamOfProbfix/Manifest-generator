@@ -11,7 +11,7 @@ def home():
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Minecraft Manifest Generator</title>
-
+<h2></> Minecraft Manifest Generator ⚙️</h2>
 <link rel="icon" type="image/png" href="/static/favicon.png">
 
 <style>
@@ -144,7 +144,7 @@ button:active {
 <div class="app">
 
 <div class="header">
-  <h2></> Minecraft Manifest Generator ⚙️</h2>
+  <h2>&lt;/&gt; Minecraft Manifest Generator ⚙️</h2>
   <p>Minecraft Bedrock Tool • Neon Edition</p>
 </div>
 
