@@ -6,6 +6,7 @@ app = Flask(__name__)
 
 @app.route("/")
 def home():
+    # Full Updated HTML/CSS/JS for Manifest Generator
     return '''
 <!DOCTYPE html>
 <html lang="en">
@@ -96,7 +97,10 @@ def home():
         /* Pack Icon Preview */
         #icon-preview { width: 64px; height: 64px; border-radius: 8px; border: 2px solid var(--s-color); object-fit: cover; display: none; margin: 10px auto; }
 
-        .footer { text-align: center; margin-top: 20px; font-size: 11px; color: var(--text-sub); }
+        /* Footer & Link styling */
+        .footer { text-align: center; margin-top: 20px; font-size: 11px; color: var(--text-sub); line-height: 1.5; }
+        .footer-link { margin-top: 5px; }
+        .footer-link a { color: var(--s-color); text-decoration: underline; font-weight: bold; }
     </style>
 </head>
 <body class="neon-theme">
@@ -134,10 +138,15 @@ def home():
                 </select>
             </div>
             <div class="input-group">
-                <label>Engine Version</label>
+                <label>Min Engine Version</label>
                 <select id="engine" onchange="liveUpdate()">
+                    <option value="1,17,0">1.17.0</option>
+                    <option value="1,18,0">1.18.0</option>
+                    <option value="1,19,0">1.19.0</option>
                     <option value="1,20,0">1.20.0</option>
-                    <option value="1,21,0" selected>1.21.0</option>
+                    <option value="1,21,0">1.21.0</option>
+                    <option value="1,26,0">1.26.0</option>
+                    <option value="1,26,3" selected>1.26.3 (Latest)</option>
                 </select>
             </div>
         </div>
@@ -160,7 +169,12 @@ def home():
         </div>
     </div>
 
-    <div class="footer">Made by <b>Probfix</b> & <b>AI Partner</b> ⚡</div>
+    <div class="footer">
+        <div>Made by <b>Probfix</b> & <b>AI Partner</b> ⚡</div>
+        <div class="footer-link">Need pack.mcmeta for Java? 
+            <a href="#" target="_blank">Click here</a>
+        </div>
+    </div>
 </div>
 
 <canvas id="canvas" width="128" height="128" style="display:none;"></canvas>
@@ -280,9 +294,10 @@ liveUpdate();
 @app.route("/download", methods=["POST"])
 def download():
     data = request.get_json(force=True)
-    with open("manifest.json", "w", encoding="utf-8") as f:
+    filename = "manifest.json"
+    with open(filename, "w", encoding="utf-8") as f:
         json.dump(data, f, indent=4)
-    return send_file("manifest.json", as_attachment=True)
+    return send_file(filename, as_attachment=True)
 
 if __name__ == "__main__":
     app.run(debug=True)
